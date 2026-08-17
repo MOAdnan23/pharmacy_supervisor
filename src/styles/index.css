@@ -1,0 +1,51 @@
+/**
+ * متغيرات الألوان العامة + إعداد RTL
+ * نستخدم CSS Variables حتى نغيّر الثيم من مكان واحد.
+ */
+:root {
+  --navy: #0b1f3a;
+  --navy-soft: #143055;
+  --green: #22c55e;
+  --bg: #f3f6fb;
+  --card: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --danger: #ef4444;
+  --shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  --radius: 14px;
+  font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  direction: rtl;
+  background: var(--bg);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}

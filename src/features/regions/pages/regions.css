@@ -1,0 +1,261 @@
+.regions-status {
+  color: var(--muted);
+}
+
+.regions-status.error {
+  color: #991b1b;
+}
+
+.regions-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+}
+
+.regions-head h1 {
+  margin: 0;
+  color: var(--navy);
+  font-size: 1.4rem;
+}
+
+.regions-head p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  max-width: 42rem;
+}
+
+.regions-cta {
+  border: 0;
+  background: var(--navy);
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.regions-banner {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.92rem;
+}
+
+.regions-banner.error {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.regions-summary {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.regions-summary article {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 6px;
+}
+
+.regions-summary span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.regions-summary strong {
+  color: var(--navy);
+  font-size: 1.3rem;
+}
+
+.regions-toolbar {
+  margin-top: 14px;
+}
+
+.regions-toolbar input {
+  width: min(420px, 100%);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #fff;
+}
+
+.regions-table-wrap {
+  margin-top: 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  box-shadow: var(--shadow);
+  overflow: auto;
+}
+
+.regions-expand {
+  border: 0;
+  background: transparent;
+  color: var(--navy);
+  font-weight: 700;
+  padding: 0;
+  cursor: pointer;
+}
+
+.regions-subs {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.regions-subs li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.regions-subs li.muted {
+  color: var(--muted);
+  background: transparent;
+  border-style: dashed;
+}
+
+.regions-note {
+  margin: 12px 8px 4px;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.regions .badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+.regions .badge.ok {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.regions .badge.stop {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.regions .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.regions .actions button {
+  border: 1px solid var(--border);
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: var(--navy);
+  font-size: 0.82rem;
+}
+
+.regions table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.regions th,
+.regions td {
+  text-align: right;
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.regions th {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  z-index: 50;
+}
+
+.modal {
+  width: min(520px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  background: #fff;
+  border-radius: 16px;
+  padding: 18px;
+  display: grid;
+  gap: 10px;
+  box-shadow: var(--shadow);
+}
+
+.modal h3 {
+  margin: 0 0 4px;
+  color: var(--navy);
+}
+
+.modal label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: var(--navy);
+}
+
+.modal input,
+.modal select {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #fff;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.modal-actions button {
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: var(--navy);
+  color: #fff;
+  font-weight: 700;
+}
+
+.modal-actions button.ghost {
+  background: #e2e8f0;
+  color: var(--navy);
+}
+
+@media (max-width: 800px) {
+  .regions-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .regions-head {
+    flex-direction: column;
+  }
+}
