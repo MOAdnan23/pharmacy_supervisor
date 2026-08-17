@@ -188,6 +188,35 @@ export const targetsMockDatasource: TargetsDatasource = {
       }
     }
 
+    // لا يتجاوز تارغت الشركة العام المتبقي لهذا الشهر
+    for (const line of lines) {
+      const companyCap = companyTargets.find(
+        (c) =>
+          c.status === 'active' &&
+          c.startDate.slice(0, 7) <= month &&
+          c.endDate.slice(0, 7) >= month &&
+          (c.companyName === line.companyName ||
+            c.companyName.includes(line.companyName) ||
+            line.companyName.includes(c.companyName.replace(/^شركة\s+/, ''))),
+      )
+      if (!companyCap) continue
+      const allocated = repTargets
+        .filter((t) => t.month === month && t.repId !== input.repId)
+        .reduce((sum, t) => {
+          const other = t.lines.find(
+            (l) =>
+              l.companyName.toLowerCase() === line.companyName.toLowerCase(),
+          )
+          return sum + (other?.target ?? 0)
+        }, 0)
+      const remaining = companyCap.amount - allocated
+      if (line.target > remaining) {
+        throw new Error(
+          `تارغت «${line.companyName}» يتجاوز المتبقي من تارغت الشركة العام (${remaining.toLocaleString('ar-SY')} ل.س متاح من أصل ${companyCap.amount.toLocaleString('ar-SY')})`,
+        )
+      }
+    }
+
     if (existingIndex >= 0) {
       repTargets[existingIndex] = withTotals({
         id: repTargets[existingIndex].id,

@@ -492,80 +492,114 @@ export function CompensationPage() {
 
       {dialog === 'salary' ? (
         <div className="cmp-modal-backdrop">
-          <form className="cmp-modal" onSubmit={submitSalary}>
-            <h3>إضافة / تعديل راتب ثابت</h3>
+          <form className="cmp-modal salary-modal" onSubmit={submitSalary}>
+            <header className="cmp-modal-head">
+              <div>
+                <p className="cmp-modal-kicker">رواتب المناديب</p>
+                <h3>
+                  {salaryRep?.fixedSalary != null
+                    ? 'تعديل راتب ثابت'
+                    : 'إضافة راتب ثابت'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                className="cmp-btn-ghost"
+                onClick={() => setDialog(null)}
+              >
+                إغلاق
+              </button>
+            </header>
             <p className="cmp-hint">{COMPENSATION_RULES.salaryNote}</p>
             {formError ? <p className="cmp-status error">{formError}</p> : null}
-            <label>
-              المندوب *
-              <select
-                value={salaryRepId}
-                onChange={(e) => {
-                  const id = e.target.value
-                  setSalaryRepId(id)
-                  const rep = board.reps.find((r) => r.repId === id)
-                  if (rep?.fixedSalary != null) {
-                    setAmount(String(rep.fixedSalary))
-                    setStartDate(rep.salaryStartDate ?? todayIsoDate())
-                  }
-                }}
-                required
-              >
-                <option value="">اختر المندوب</option>
-                {board.reps.map((r) => (
-                  <option key={r.repId} value={r.repId}>
-                    {r.repName} — {r.mainRegionLabel}
-                    {r.subRegionLabels.length
-                      ? ` · ${r.subRegionLabels.join('، ')}`
+
+            <div className="cmp-salary-grid">
+              <label className="full">
+                المندوب *
+                <select
+                  value={salaryRepId}
+                  onChange={(e) => {
+                    const id = e.target.value
+                    setSalaryRepId(id)
+                    const rep = board.reps.find((r) => r.repId === id)
+                    if (rep?.fixedSalary != null) {
+                      setAmount(String(rep.fixedSalary))
+                      setStartDate(rep.salaryStartDate ?? todayIsoDate())
+                    } else {
+                      setAmount('')
+                      setStartDate(todayIsoDate())
+                    }
+                  }}
+                  required
+                >
+                  <option value="">اختر المندوب</option>
+                  {board.reps.map((r) => (
+                    <option key={r.repId} value={r.repId}>
+                      {r.repName}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {salaryRep ? (
+                <div className="cmp-salary-rep-card full">
+                  <strong>{salaryRep.repName}</strong>
+                  <span>
+                    {salaryRep.mainRegionLabel}
+                    {salaryRep.subRegionLabels.length
+                      ? ` · ${salaryRep.subRegionLabels.join('، ')}`
                       : ''}
-                    {r.fixedSalary != null
-                      ? ` (حالي: ${money(r.fixedSalary)})`
-                      : ''}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {salaryRep ? (
-              <p className="cmp-hint">
-                التقييم الحالي: {salaryRep.evaluationPercent}% — لا يشترط
-                للتثبيت
-              </p>
-            ) : null}
-            <label>
-              قيمة الراتب (ل.س) *
-              <input
-                type="number"
-                min={1}
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                required
-              />
-            </label>
-            <label>
-              تاريخ الاعتماد *
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                required
-              />
-            </label>
-            <label>
-              تاريخ النهاية (اختياري)
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-            </label>
-            <label>
-              ملاحظات
-              <textarea
-                rows={2}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              />
-            </label>
+                  </span>
+                  <span>
+                    التقييم: {salaryRep.evaluationPercent}% (لا يشترط للتثبيت)
+                  </span>
+                  {salaryRep.fixedSalary != null ? (
+                    <span className="cmp-salary-current">
+                      الراتب الحالي: {money(salaryRep.fixedSalary)}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
+
+              <label>
+                قيمة الراتب (ل.س) *
+                <input
+                  type="number"
+                  min={1}
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  required
+                  placeholder="مثال: 1500000"
+                />
+              </label>
+              <label>
+                تاريخ الاعتماد *
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  required
+                />
+              </label>
+              <label className="full">
+                تاريخ النهاية (اختياري)
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </label>
+              <label className="full">
+                ملاحظات
+                <textarea
+                  rows={2}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="تظهر للمندوب والمفوتر عند الإشعار"
+                />
+              </label>
+            </div>
+
             <div className="cmp-form-actions">
               <button
                 type="button"
@@ -575,7 +609,7 @@ export function CompensationPage() {
                 إلغاء
               </button>
               <button type="submit" className="cmp-btn" disabled={busy}>
-                حفظ وإشعار
+                حفظ وإشعار المندوب/المفوتر
               </button>
             </div>
           </form>

@@ -205,6 +205,10 @@ export function RegionsPage() {
           <span>رئيسية فعّالة</span>
           <strong>{data.activeMain}</strong>
         </article>
+        <article>
+          <span>فرعية فعّالة</span>
+          <strong>{data.activeSub}</strong>
+        </article>
       </section>
 
       <div className="regions-toolbar">

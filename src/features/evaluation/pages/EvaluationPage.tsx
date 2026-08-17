@@ -67,11 +67,26 @@ export function EvaluationPage() {
   useEffect(() => {
     let alive = true
     const start: EvaluationFilter = {
-      repId: searchParams.get('repId') || 'r1',
+      repId: '',
       from: dates.from,
       to: dates.to,
       mainRegionId: null,
       subRegionId: null,
+    }
+    // رابط عميق بمندوب: افتح منطقته الرئيسية تلقائياً
+    const deepRep = searchParams.get('repId')
+    if (deepRep) {
+      const known = (
+        [
+          { id: 'r1', main: 'mr1' },
+          { id: 'r2', main: 'mr2' },
+          { id: 'r3', main: 'mr1' },
+        ] as const
+      ).find((x) => x.id === deepRep)
+      if (known) {
+        start.mainRegionId = known.main
+        start.repId = known.id
+      }
     }
     datasource
       .getBoard(start)
@@ -219,6 +234,7 @@ export function EvaluationPage() {
               applyFilter({
                 mainRegionId: e.target.value || null,
                 subRegionId: null,
+                repId: '',
               })
             }
           >
@@ -236,7 +252,10 @@ export function EvaluationPage() {
             value={filter.subRegionId ?? ''}
             disabled={!filter.mainRegionId && board.subRegionOptions.length === 0}
             onChange={(e) =>
-              applyFilter({ subRegionId: e.target.value || null })
+              applyFilter({
+                subRegionId: e.target.value || null,
+                repId: '',
+              })
             }
           >
             <option value="">
@@ -253,8 +272,12 @@ export function EvaluationPage() {
           المندوب
           <select
             value={filter.repId}
+            disabled={!filter.mainRegionId}
             onChange={(e) => applyFilter({ repId: e.target.value })}
           >
+            {!filter.mainRegionId ? (
+              <option value="">— اختر المنطقة الرئيسية أولاً —</option>
+            ) : null}
             {board.repOptions.map((r) => (
               <option key={r.id} value={r.id}>
                 {r.name}
@@ -281,9 +304,9 @@ export function EvaluationPage() {
       </div>
 
       <p className="eval-hint">
-        نطاق التقييم الحالي:{' '}
-        <strong>{card?.regionLabel ?? '—'}</strong> — عند اختيار مندوب تظهر
-        مناطقه الفرعية؛ وعند اختيار منطقة تظهر المناديب التابعة لها.
+        اختر المنطقة الرئيسية (ثم الفرعية إن أردت) — يُعرض تقييم أول مندوب في
+        النطاق فوراً، ويمكنك تغيير المندوب. التغطية والمكررة على صيدليات مناطقه
+        فقط.
       </p>
 
       <section className="eval-scale">

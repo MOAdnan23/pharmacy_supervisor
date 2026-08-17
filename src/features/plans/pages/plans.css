@@ -283,6 +283,64 @@
   display: grid;
   gap: 10px;
   margin-bottom: 10px;
+  position: relative;
+}
+
+.plans-goal-name-slot {
+  border: 1px dashed rgba(15, 23, 42, 0.18);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: transparent;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+}
+
+.plans-goal-name-ghost {
+  color: var(--navy);
+  font-weight: 700;
+  font-size: 1rem;
+  opacity: 0.72;
+}
+
+.plans-value-trigger {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 11px;
+  background: #fff;
+  text-align: right;
+  cursor: pointer;
+  color: var(--navy);
+  font-weight: 600;
+}
+
+.plans-picker {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.plans-picker-list {
+  display: grid;
+  gap: 6px;
+  max-height: 180px;
+  overflow: auto;
+}
+
+.plans-selected-chips {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.plans-banner.ok {
+  background: #ecfdf5;
+  color: #065f46;
+  border-color: #a7f3d0;
 }
 
 .plans-goal-head {

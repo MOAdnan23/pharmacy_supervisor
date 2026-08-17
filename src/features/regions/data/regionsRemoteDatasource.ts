@@ -53,6 +53,14 @@ function toOverview(list: MainRegion[]): RegionsOverview {
     totalMain: list.length,
     totalSub: list.reduce((n, r) => n + r.subRegions.length, 0),
     activeMain: list.filter((r) => r.status === 'active').length,
+    activeSub: list.reduce(
+      (n, r) =>
+        n +
+        (r.status === 'active'
+          ? r.subRegions.filter((s) => s.status === 'active').length
+          : 0),
+      0,
+    ),
   }
 }
 

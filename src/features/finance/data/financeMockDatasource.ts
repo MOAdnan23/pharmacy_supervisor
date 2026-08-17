@@ -457,17 +457,20 @@ export const financeMockDatasource: FinanceDatasource = {
   async createAdjustment(input: FinancialAdjustmentInput) {
     const reason = input.reason.trim()
     if (!reason) throw new Error('سبب التعديل مطلوب')
-    if (!Number.isFinite(input.amount) || input.amount <= 0) {
-      throw new Error('المبلغ يجب أن يكون أكبر من صفر')
+    if (!Number.isFinite(input.amount) || input.amount === 0) {
+      throw new Error('أدخل مبلغاً صالحاً (أي رقم غير صفر يحدده المشرف)')
     }
+    const amount = Math.abs(input.amount)
     const pharmacy = pharmacies.find((p) => p.id === input.pharmacyId)
     if (!pharmacy) throw new Error('الصيدلية غير موجودة')
 
     const id = `ADJ-${adjCounter++}`
     const today = new Date().toISOString().slice(0, 10)
-    const debit = input.type === 'debit' ? input.amount : 0
-    const credit = input.type === 'credit' ? input.amount : 0
+    const debit = input.type === 'debit' ? amount : 0
+    const credit = input.type === 'credit' ? amount : 0
     pharmacy.currentBalance += debit - credit
+    const region = REGIONS.find((r) => r.id === pharmacy.mainRegionId)
+    const sub = region?.subRegions.find((s) => s.id === pharmacy.subRegionId)
     seedMoves.push({
       id,
       type: input.type === 'debit' ? 'debit_adjustment' : 'credit_adjustment',
@@ -477,7 +480,10 @@ export const financeMockDatasource: FinanceDatasource = {
       date: today,
       debit,
       credit,
-      notes: reason,
+      address: pharmacy.address,
+      notes: `${reason} · موقع الصيدلية: ${region?.name ?? ''} — ${sub?.name ?? ''} · ${pharmacy.address} · يُشعر المندوب والمفوتر`,
+      repId: pharmacy.repNames[0] ? REPS.find((r) => r.name === pharmacy.repNames[0])?.id : undefined,
+      repName: pharmacy.repNames[0],
     })
   },
 }

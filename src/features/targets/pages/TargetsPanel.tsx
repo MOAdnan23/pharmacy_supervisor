@@ -199,6 +199,40 @@ export function TargetsPanel({ onRepTargetsChanged }: Props) {
     }, 0)
   }, [repForm.lines])
 
+  function companyRemaining(companyName: string): {
+    cap: number | null
+    remaining: number | null
+  } {
+    if (!board || !companyName.trim()) return { cap: null, remaining: null }
+    const month = repForm.month
+    const companyCap = board.companyTargets.find(
+      (c) =>
+        c.status === 'active' &&
+        c.startDate.slice(0, 7) <= month &&
+        c.endDate.slice(0, 7) >= month &&
+        (c.companyName === companyName ||
+          c.companyName.includes(companyName) ||
+          companyName.includes(c.companyName.replace(/^شركة\s+/, ''))),
+    )
+    if (!companyCap) return { cap: null, remaining: null }
+    const allocated = board.repTargets
+      .filter(
+        (t) =>
+          t.month === month &&
+          t.repId !== repForm.repId,
+      )
+      .reduce((sum, t) => {
+        const other = t.lines.find(
+          (l) => l.companyName.toLowerCase() === companyName.toLowerCase(),
+        )
+        return sum + (other?.target ?? 0)
+      }, 0)
+    return {
+      cap: companyCap.amount,
+      remaining: companyCap.amount - allocated,
+    }
+  }
+
   async function submitRep(e: FormEvent) {
     e.preventDefault()
     setBusy(true)
@@ -536,7 +570,9 @@ export function TargetsPanel({ onRepTargetsChanged }: Props) {
             )}
 
             <div className="rep-lines">
-              {repForm.lines.map((line, index) => (
+              {repForm.lines.map((line, index) => {
+                const rem = companyRemaining(line.companyName)
+                return (
                 <div key={index} className="rep-line-row">
                   <label>
                     الشركة
@@ -562,12 +598,23 @@ export function TargetsPanel({ onRepTargetsChanged }: Props) {
                     <input
                       type="number"
                       min={1}
+                      max={rem.remaining ?? undefined}
                       value={line.target}
                       onChange={(e) =>
                         updateLine(index, { target: e.target.value })
                       }
                       required
                     />
+                    {rem.remaining != null ? (
+                      <small className="target-remaining">
+                        تارغت الشركة: {rem.cap!.toLocaleString('ar-SY')} · المتبقي:{' '}
+                        {Math.max(0, rem.remaining).toLocaleString('ar-SY')}
+                      </small>
+                    ) : (
+                      <small className="target-remaining mute">
+                        لا يوجد تارغت شركة عام نشط لهذا الشهر
+                      </small>
+                    )}
                   </label>
                   <button
                     type="button"
@@ -578,7 +625,7 @@ export function TargetsPanel({ onRepTargetsChanged }: Props) {
                     حذف
                   </button>
                 </div>
-              ))}
+              )})}
             </div>
 
             <p className="lines-total">

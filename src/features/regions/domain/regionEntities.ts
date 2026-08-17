@@ -21,6 +21,7 @@ export type RegionsOverview = {
   totalMain: number
   totalSub: number
   activeMain: number
+  activeSub: number
 }
 
 export type CreateMainRegionInput = {

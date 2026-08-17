@@ -16,7 +16,7 @@ export const plansRemoteDatasource: PlansDatasource = {
     )
     if (data.plans && data.summary) return data
     if (data.data?.plans) return data.data
-    throw new Error('رد خطط العمل غير مفهوم')
+    throw new Error('رد خطط العمل غير مفهوم من الخادم')
   },
 
   async getById(id) {

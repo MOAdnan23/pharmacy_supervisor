@@ -272,6 +272,22 @@
   overflow: auto;
 }
 
+.fin-adj-pharmacy-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 10px 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.fin-adj-pharmacy-card p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--navy);
+  line-height: 1.45;
+}
+
 .fin-modal.wide {
   width: min(920px, 100%);
 }

@@ -14,12 +14,95 @@ import {
 import type { PlansDatasource } from './plansDatasource'
 
 const REP_OPTIONS = [
-  { id: 'r1', name: 'ياسين العمودي', region: 'دمشق', pharmacyCount: 14 },
-  { id: 'r2', name: 'محمد الشهري', region: 'حلب', pharmacyCount: 9 },
-  { id: 'r3', name: 'سامر الحسن', region: 'حمص', pharmacyCount: 11 },
+  {
+    id: 'r1',
+    name: 'ياسين العمودي',
+    region: 'دمشق',
+    pharmacyCount: 14,
+    mainRegionIds: ['damascus'],
+    subRegionIds: ['mazzeh', 'kafrsouseh', 'malki', 'abu-rummaneh'],
+  },
+  {
+    id: 'r2',
+    name: 'محمد الشهري',
+    region: 'حلب',
+    pharmacyCount: 9,
+    mainRegionIds: ['aleppo'],
+    subRegionIds: ['aziziyah', 'salahuddin'],
+  },
+  {
+    id: 'r3',
+    name: 'سامر الحسن',
+    region: 'دمشق',
+    pharmacyCount: 11,
+    mainRegionIds: ['damascus'],
+    subRegionIds: ['kafrsouseh', 'malki'],
+  },
 ]
 
-const REGION_OPTIONS = ['دمشق', 'ريف دمشق', 'حلب', 'حمص']
+const REGION_TREE = [
+  {
+    mainId: 'damascus',
+    mainName: 'دمشق',
+    subs: [
+      { id: 'mazzeh', name: 'المزة' },
+      { id: 'kafrsouseh', name: 'كفرسوسة' },
+      { id: 'malki', name: 'المالكي' },
+      { id: 'abu-rummaneh', name: 'أبو رمانة' },
+    ],
+  },
+  {
+    mainId: 'aleppo',
+    mainName: 'حلب',
+    subs: [
+      { id: 'aziziyah', name: 'العزيزية' },
+      { id: 'salahuddin', name: 'صلاح الدين' },
+    ],
+  },
+  {
+    mainId: 'homs',
+    mainName: 'حمص',
+    subs: [{ id: 'inshaat', name: 'الإنشاءات' }],
+  },
+]
+
+const REGION_OPTIONS = REGION_TREE.map((r) => r.mainName)
+
+const COMPANY_OPTIONS = [
+  { id: 'c1', name: 'GSK العالمية', meta: 'شركة أدوية' },
+  { id: 'c2', name: 'دمشق فارما', meta: 'شركة أدوية' },
+  { id: 'c3', name: 'ابن سينا', meta: 'شركة أدوية' },
+  { id: 'c4', name: 'حلب ميديكال', meta: 'شركة أدوية' },
+]
+
+const PRODUCT_OPTIONS = [
+  { id: 'p101', name: 'أوغمنتين 1 جم', meta: 'GSK' },
+  { id: 'p102', name: 'فولتارين جل', meta: 'GSK' },
+  { id: 'p103', name: 'باراسيتامول', meta: 'دمشق فارما' },
+  { id: 'p104', name: 'أموكسيسيلين', meta: 'ابن سينا' },
+  { id: 'p105', name: 'شراب أطفال', meta: 'حلب ميديكال' },
+]
+
+const PHARMACY_BY_REP: Record<
+  string,
+  { id: string; name: string; meta?: string }[]
+> = {
+  r1: [
+    { id: 'ph1', name: 'صيدلية النور', meta: 'المزة' },
+    { id: 'ph2', name: 'صيدلية الحياة', meta: 'المالكي' },
+    { id: 'ph3', name: 'صيدلية الرازي', meta: 'كفرسوسة' },
+    { id: 'ph4', name: 'صيدلية الياسمين', meta: 'المزة' },
+    { id: 'ph5', name: 'صيدلية الأمل', meta: 'أبو رمانة' },
+  ],
+  r2: [
+    { id: 'ph10', name: 'صيدلية العزيزية', meta: 'العزيزية' },
+    { id: 'ph11', name: 'صيدلية صلاح الدين', meta: 'صلاح الدين' },
+  ],
+  r3: [
+    { id: 'ph3', name: 'صيدلية الرازي', meta: 'كفرسوسة' },
+    { id: 'ph2', name: 'صيدلية الحياة', meta: 'المالكي' },
+  ],
+}
 
 function nextId(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}`
@@ -524,6 +607,13 @@ function board(): PlansBoard {
     summary: summaryOf(plans),
     repOptions: [...REP_OPTIONS],
     regionOptions: [...REGION_OPTIONS],
+    regionTree: REGION_TREE.map((r) => ({
+      ...r,
+      subs: [...r.subs],
+    })),
+    companyOptions: [...COMPANY_OPTIONS],
+    pharmacyOptionsByRep: { ...PHARMACY_BY_REP },
+    productOptions: [...PRODUCT_OPTIONS],
   }
 }
 
@@ -541,19 +631,47 @@ export const plansMockDatasource: PlansDatasource = {
   async upsertPlan(input: UpsertPlanInput) {
     const name = requirePlanName(input.name)
     validatePlanDates(input.startDate, input.endDate)
-    if (!input.regionLabel.trim()) throw new Error('المنطقة مطلوبة')
     if (!input.repIds.length) throw new Error('حدد مندوباً واحداً على الأقل')
     if (!input.goals.length) throw new Error('أضف هدفاً واحداً على الأقل')
     input.goals.forEach((g, i) => {
-      if (!g.label.trim()) throw new Error(`هدف رقم ${i + 1}: العنوان مطلوب`)
       if (!(g.targetValue > 0)) {
         throw new Error(`هدف رقم ${i + 1}: القيمة المطلوبة يجب أن تكون أكبر من صفر`)
+      }
+      if (
+        (g.type === 'companies' ||
+          g.type === 'specific_pharmacies' ||
+          g.type === 'specific_products') &&
+        !(g.selectedIds?.length)
+      ) {
+        throw new Error(`هدف رقم ${i + 1}: اختر عنصراً واحداً على الأقل`)
       }
     })
 
     const repNames = input.repIds.map(
       (id) => REP_OPTIONS.find((r) => r.id === id)?.name ?? id,
     )
+    const regionLabel =
+      input.regionLabel.trim() ||
+      (input.mainRegionId
+        ? REGION_TREE.find((r) => r.mainId === input.mainRegionId)?.mainName ??
+          ''
+        : 'بدون تقييد منطقة')
+
+    const mapGoal = (
+      g: UpsertPlanInput['goals'][number],
+      prevId?: string,
+      prevAchieved = 0,
+    ) => ({
+      id: prevId ?? nextId('goal'),
+      type: g.type,
+      label: g.label.trim() || name,
+      targetValue: g.targetValue,
+      achievedValue: prevAchieved,
+      unit: g.unit,
+      note: g.note,
+      selectedIds: g.selectedIds ? [...g.selectedIds] : undefined,
+      selectedLabels: g.selectedLabels ? [...g.selectedLabels] : undefined,
+    })
 
     if (input.id) {
       const idx = plans.findIndex((p) => p.id === input.id)
@@ -565,19 +683,15 @@ export const plansMockDatasource: PlansDatasource = {
         description: input.description.trim(),
         startDate: input.startDate,
         endDate: input.endDate,
-        regionLabel: input.regionLabel.trim(),
+        regionLabel,
+        mainRegionId: input.mainRegionId ?? null,
+        subRegionId: input.subRegionId ?? null,
         repIds: [...input.repIds],
         repNames,
         status: input.status ?? prev.status,
-        goals: input.goals.map((g, i) => ({
-          id: prev.goals[i]?.id ?? nextId('goal'),
-          type: g.type,
-          label: g.label.trim(),
-          targetValue: g.targetValue,
-          achievedValue: prev.goals[i]?.achievedValue ?? 0,
-          unit: g.unit,
-          note: g.note,
-        })),
+        goals: input.goals.map((g, i) =>
+          mapGoal(g, prev.goals[i]?.id, prev.goals[i]?.achievedValue ?? 0),
+        ),
         updatedAt: today(),
       })
       plans = [...plans.slice(0, idx), next, ...plans.slice(idx + 1)]
@@ -592,18 +706,12 @@ export const plansMockDatasource: PlansDatasource = {
       status: input.status ?? 'in_progress',
       startDate: input.startDate,
       endDate: input.endDate,
-      regionLabel: input.regionLabel.trim(),
+      regionLabel,
+      mainRegionId: input.mainRegionId ?? null,
+      subRegionId: input.subRegionId ?? null,
       repIds: [...input.repIds],
       repNames,
-      goals: input.goals.map((g) => ({
-        id: nextId('goal'),
-        type: g.type,
-        label: g.label.trim(),
-        targetValue: g.targetValue,
-        achievedValue: 0,
-        unit: g.unit,
-        note: g.note,
-      })),
+      goals: input.goals.map((g) => mapGoal(g)),
       notes: [],
       progressPercent: 0,
       repEvaluations: [],

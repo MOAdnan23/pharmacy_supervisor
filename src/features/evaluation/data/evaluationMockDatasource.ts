@@ -131,60 +131,61 @@ function resolveOptions(filter: EvaluationFilter): {
   const dates = defaultEvalDates()
   let mainRegionId = filter.mainRegionId
   let subRegionId = filter.subRegionId
-  let repId = filter.repId || REPS[0]!.id
-
-  // المناديب حسب المنطقة المختارة
-  let repOptions = REPS.filter((r) => {
-    if (subRegionId) return r.subRegionIds.includes(subRegionId)
-    if (mainRegionId) return r.mainRegionIds.includes(mainRegionId)
-    return true
-  })
-
-  if (!repOptions.some((r) => r.id === repId)) {
-    repId = repOptions[0]?.id ?? REPS[0]!.id
-  }
-
-  const activeRep = REPS.find((r) => r.id === repId) ?? REPS[0]!
-
-  // الفرعية: ضمن الرئيسية إن وُجدت + ضمن مناطق المندوب
-  let subRegionOptions = SUB_REGIONS.filter((s) => {
-    if (mainRegionId && s.mainRegionId !== mainRegionId) return false
-    if (!mainRegionId && !activeRep.subRegionIds.includes(s.id)) return false
-    if (mainRegionId && !activeRep.subRegionIds.includes(s.id)) return false
-    return true
-  }).map((s) => ({ id: s.id, name: s.name }))
-
-  // إن لم تُختر رئيسية بعد: اعرض فرعيات المندوب كلها
-  if (!mainRegionId) {
-    subRegionOptions = SUB_REGIONS.filter((s) =>
-      activeRep.subRegionIds.includes(s.id),
-    ).map((s) => ({ id: s.id, name: s.name }))
-  }
-
-  if (subRegionId && !subRegionOptions.some((s) => s.id === subRegionId)) {
-    subRegionId = null
-  }
-
-  // إذا اختيرت فرعية بدون رئيسية — عبّئ الرئيسية تلقائياً
-  if (subRegionId && !mainRegionId) {
-    mainRegionId =
-      SUB_REGIONS.find((s) => s.id === subRegionId)?.mainRegionId ?? null
-  }
-
-  // أعد تصفية المناديب بعد تصحيح الفرعية/الرئيسية
-  repOptions = REPS.filter((r) => {
-    if (subRegionId) return r.subRegionIds.includes(subRegionId)
-    if (mainRegionId) return r.mainRegionIds.includes(mainRegionId)
-    return true
-  })
-  if (!repOptions.some((r) => r.id === repId)) {
-    repId = repOptions[0]?.id ?? activeRep.id
-  }
+  let repId = filter.repId
 
   const mainRegionOptions = MAIN_REGIONS.map((m) => ({
     id: m.id,
     name: m.name,
   }))
+
+  // لا يُفتح اختيار المندوب قبل المنطقة الرئيسية
+  if (!mainRegionId) {
+    return {
+      filter: {
+        repId: '',
+        from: filter.from || dates.from,
+        to: filter.to || dates.to,
+        mainRegionId: null,
+        subRegionId: null,
+      },
+      mainRegionOptions,
+      subRegionOptions: [],
+      repOptions: [],
+    }
+  }
+
+  let subRegionOptions = SUB_REGIONS.filter(
+    (s) => s.mainRegionId === mainRegionId,
+  ).map((s) => ({ id: s.id, name: s.name }))
+
+  if (subRegionId && !subRegionOptions.some((s) => s.id === subRegionId)) {
+    subRegionId = null
+  }
+
+  let repOptions = REPS.filter((r) => {
+    if (subRegionId) return r.subRegionIds.includes(subRegionId)
+    return r.mainRegionIds.includes(mainRegionId!)
+  })
+
+  // فور اختيار المنطقة: اختر أول مندوب متاح تلقائياً لعرض التقييم فوراً
+  if (!repId || !repOptions.some((r) => r.id === repId)) {
+    repId = repOptions[0]?.id ?? ''
+  }
+
+  // الفرعية المتاحة للمندوب المختار (إن وُجد)
+  if (repId) {
+    const activeRep = REPS.find((r) => r.id === repId)
+    if (activeRep) {
+      subRegionOptions = SUB_REGIONS.filter(
+        (s) =>
+          s.mainRegionId === mainRegionId &&
+          activeRep.subRegionIds.includes(s.id),
+      ).map((s) => ({ id: s.id, name: s.name }))
+      if (subRegionId && !subRegionOptions.some((s) => s.id === subRegionId)) {
+        subRegionId = null
+      }
+    }
+  }
 
   return {
     filter: {
@@ -230,9 +231,16 @@ function buildCard(filter: EvaluationFilter) {
   })
 
   const targets = TARGETS.filter((t) => t.repId === filter.repId)
-  const pharmaciesInScope = PHARMACIES.filter((p) =>
-    inGeoScope(p.mainRegionId, p.subRegionId, filter),
-  )
+  const pharmaciesInScope = PHARMACIES.filter((p) => {
+    if (!inGeoScope(p.mainRegionId, p.subRegionId, filter)) return false
+    const rep = REPS.find((r) => r.id === filter.repId)
+    if (!rep) return false
+    // تغطية مناطق المندوب فقط (وليس كل صيدليات الجغرافيا)
+    return (
+      rep.mainRegionIds.includes(p.mainRegionId) &&
+      rep.subRegionIds.includes(p.subRegionId)
+    )
+  })
 
   const breakdown = computeBreakdown({
     invoices,
@@ -260,12 +268,15 @@ function buildCard(filter: EvaluationFilter) {
 export const evaluationMockDatasource: EvaluationDatasource = {
   async getBoard(filter) {
     const resolved = resolveOptions(filter)
+    const canScore = Boolean(
+      resolved.filter.mainRegionId && resolved.filter.repId,
+    )
     return {
       filter: resolved.filter,
       mainRegionOptions: resolved.mainRegionOptions,
       subRegionOptions: resolved.subRegionOptions,
       repOptions: resolved.repOptions,
-      card: buildCard(resolved.filter),
+      card: canScore ? buildCard(resolved.filter) : null,
     } satisfies EvaluationBoard
   },
 

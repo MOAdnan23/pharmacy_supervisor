@@ -71,6 +71,14 @@ function nextId(prefix: string): string {
 
 function overview(): RegionsOverview {
   const totalSub = regions.reduce((s, r) => s + r.subRegions.length, 0)
+  const activeSub = regions.reduce(
+    (s, r) =>
+      s +
+      (r.status === 'active'
+        ? r.subRegions.filter((x) => x.status === 'active').length
+        : 0),
+    0,
+  )
   return {
     regions: regions.map((r) => ({
       ...r,
@@ -79,6 +87,7 @@ function overview(): RegionsOverview {
     totalMain: regions.length,
     totalSub,
     activeMain: regions.filter((r) => r.status === 'active').length,
+    activeSub,
   }
 }
 
@@ -129,9 +138,13 @@ export const regionsMockDatasource: RegionsDatasource = {
     const idx = regions.findIndex((r) => r.id === input.id)
     if (idx < 0) throw new Error('المنطقة غير موجودة')
     const current = regions[idx]
+    const nextSubs =
+      input.status === 'inactive'
+        ? current.subRegions.map((s) => ({ ...s, status: 'inactive' as const }))
+        : current.subRegions
     regions = [
       ...regions.slice(0, idx),
-      { ...current, name, status: input.status },
+      { ...current, name, status: input.status, subRegions: nextSubs },
       ...regions.slice(idx + 1),
     ]
   },

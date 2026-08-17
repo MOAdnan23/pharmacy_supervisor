@@ -19,17 +19,35 @@ export type GoalType =
   | 'collections'
   | 'companies'
   | 'specific_pharmacies'
+  | 'specific_products'
 
 export type EvaluationLevel = 'excellent' | 'very_good' | 'good' | 'needs_followup'
 
 export type PlanGoal = {
   id: string
   type: GoalType
+  /** يعرض اسم الخطة عادة */
   label: string
   targetValue: number
   achievedValue: number
+  /** تُحدَّد تلقائياً حسب النوع (للتوافق مع المندوب/الباك) */
   unit: string
   note?: string
+  /** معرفات الشركات / الصيدليات / الأصناف المحددة */
+  selectedIds?: string[]
+  selectedLabels?: string[]
+}
+
+export type PlanCatalogOption = {
+  id: string
+  name: string
+  meta?: string
+}
+
+export type PlanRegionNode = {
+  mainId: string
+  mainName: string
+  subs: { id: string; name: string }[]
 }
 
 /**
@@ -114,7 +132,10 @@ export type WorkPlan = {
   status: PlanStatus
   startDate: string
   endDate: string
+  /** نص العرض — قد يكون فارغاً = بدون تقييد منطقة */
   regionLabel: string
+  mainRegionId?: string | null
+  subRegionId?: string | null
   repIds: string[]
   repNames: string[]
   /** مندوب مقترح إن كانت واردة من مندوب */
@@ -147,8 +168,19 @@ export type PlansSummary = {
 export type PlansBoard = {
   plans: WorkPlan[]
   summary: PlansSummary
-  repOptions: { id: string; name: string; region: string; pharmacyCount: number }[]
+  repOptions: {
+    id: string
+    name: string
+    region: string
+    pharmacyCount: number
+    mainRegionIds: string[]
+    subRegionIds: string[]
+  }[]
   regionOptions: string[]
+  regionTree: PlanRegionNode[]
+  companyOptions: PlanCatalogOption[]
+  pharmacyOptionsByRep: Record<string, PlanCatalogOption[]>
+  productOptions: PlanCatalogOption[]
 }
 
 export type UpsertPlanInput = {
@@ -158,6 +190,8 @@ export type UpsertPlanInput = {
   startDate: string
   endDate: string
   regionLabel: string
+  mainRegionId?: string | null
+  subRegionId?: string | null
   repIds: string[]
   goals: Omit<PlanGoal, 'id' | 'achievedValue'>[]
   status?: PlanStatus

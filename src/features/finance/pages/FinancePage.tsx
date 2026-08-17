@@ -242,7 +242,9 @@ export function FinancePage() {
         reason: adjReason,
       })
       setShowAdjust(false)
-      setMessage('تم تسجيل التعديل في دفتر الذمة فقط — دون أثر على الصندوق')
+      setMessage(
+        'تم الاعتماد — سُجّل عند المندوب والمفوتر مع رصيد الصيدلية وموقعها',
+      )
       await reload(filter)
     } catch (err: unknown) {
       setAdjError(err instanceof Error ? err.message : 'فشل التعديل')
@@ -697,7 +699,8 @@ export function FinancePage() {
           <form className="fin-modal" onSubmit={submitAdjustment}>
             <h3>تعديل مالي مباشر</h3>
             <p className="fin-banner">
-              يؤثر على ذمة الصيدلية فقط — دون أثر على صندوق المستودع.
+              المشرف يدخل أي مبلغ يريده. عند الاعتماد يُسجَّل عند المندوب
+              والمفوتر مع رصيد الصيدلية وموقعها.
             </p>
             {adjError ? <p className="fin-status error">{adjError}</p> : null}
             <label>
@@ -709,11 +712,34 @@ export function FinancePage() {
               >
                 {board.pharmacies.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} — {money(p.currentBalance)}
+                    {p.name} — رصيد {money(p.currentBalance)}
                   </option>
                 ))}
               </select>
             </label>
+            {adjPharmacy ? (
+              <div className="fin-adj-pharmacy-card">
+                <p>
+                  <strong>رصيد الصيدلية الحالي:</strong>{' '}
+                  {money(adjPharmacy.currentBalance)}
+                </p>
+                <p>
+                  <strong>أين معلومات الصيدلية:</strong>{' '}
+                  {board.regions.find((r) => r.id === adjPharmacy.mainRegionId)
+                    ?.name ?? '—'}{' '}
+                  —{' '}
+                  {board.regions
+                    .find((r) => r.id === adjPharmacy.mainRegionId)
+                    ?.subRegions.find((s) => s.id === adjPharmacy.subRegionId)
+                    ?.name ?? '—'}{' '}
+                  · {adjPharmacy.address}
+                </p>
+                <p>
+                  <strong>المناديب المرتبطون:</strong>{' '}
+                  {adjPharmacy.repNames.join('، ') || '—'}
+                </p>
+              </div>
+            ) : null}
             <div className="fin-seg">
               {(['debit', 'credit'] as const).map((t) => (
                 <button
@@ -727,14 +753,14 @@ export function FinancePage() {
               ))}
             </div>
             <label>
-              المبلغ * (ل.س)
+              المبلغ * (ل.س) — أي رقم يحدده المشرف
               <input
                 type="number"
-                min={1}
-                step="1000"
+                step="any"
                 value={adjAmount}
                 onChange={(e) => setAdjAmount(e.target.value)}
                 required
+                placeholder="مثال: 50000 أو 1250.5"
               />
             </label>
             <label>
@@ -744,7 +770,7 @@ export function FinancePage() {
                 value={adjReason}
                 onChange={(e) => setAdjReason(e.target.value)}
                 required
-                placeholder="السبب إلزامي ويظهر في كشف الحساب"
+                placeholder="السبب إلزامي ويظهر للمندوب والمفوتر"
               />
             </label>
             <div className="fin-mini-metrics">
@@ -761,7 +787,7 @@ export function FinancePage() {
                 إلغاء
               </button>
               <button type="submit" className="fin-btn" disabled={busy}>
-                تأكيد التعديل
+                اعتماد وإشعار المندوب/المفوتر
               </button>
             </div>
           </form>

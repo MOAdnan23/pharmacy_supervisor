@@ -125,6 +125,19 @@
   color: var(--muted);
 }
 
+.target-remaining {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #0f766e;
+}
+
+.target-remaining.mute {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
 .lines-total strong {
   color: var(--navy);
 }

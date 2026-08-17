@@ -63,6 +63,8 @@ export function goalTypeLabel(type: GoalType): string {
       return 'شركات مستهدفة'
     case 'specific_pharmacies':
       return 'صيدليات محددة'
+    case 'specific_products':
+      return 'أصناف محددة'
   }
 }
 
@@ -79,8 +81,19 @@ export function goalTypeHint(type: GoalType): string {
     case 'collections':
       return 'مجموع التحصيلات المرتبطة بالصيدليات ضمن فترة الخطة'
     case 'companies':
-      return 'شركات مستهدفة ضمن الخطة'
+      return 'اختر الشركات المستهدفة ثم حدّد القيمة المطلوبة'
+    case 'specific_products':
+      return 'اضغط على القيمة المطلوبة لاختيار الأصناف مع البحث'
   }
+}
+
+export function defaultGoalUnit(type: GoalType): string {
+  if (type === 'sales' || type === 'collections') return 'ل.س'
+  if (type === 'visits') return 'زيارة'
+  if (type === 'pharmacies' || type === 'specific_pharmacies') return 'صيدلية'
+  if (type === 'companies') return 'شركة'
+  if (type === 'specific_products') return 'صنف'
+  return 'هدف'
 }
 
 export function evaluationLabel(level: EvaluationLevel): string {
