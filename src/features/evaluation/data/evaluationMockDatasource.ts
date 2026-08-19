@@ -20,6 +20,7 @@ import {
   gradeFromPercent,
 } from '../domain/evaluationLabels'
 import type { EvaluationDatasource } from './evaluationDatasource'
+import { pushSupervisorReviewToRep } from '../../../core/mock/repInboxBridge'
 
 const MAIN_REGIONS = [
   { id: 'mr1', name: 'دمشق' },
@@ -107,6 +108,19 @@ const TARGETS: CompanyTargetSeed[] = [
 ]
 
 const reviews = new Map<string, SupervisorReview>()
+
+// تقييم مسبق كأن المشرف أرسله للمندوب (Mock)
+;(() => {
+  const dates = defaultEvalDates()
+  reviews.set(`r1|${dates.from}|${dates.to}|mr1|all`, {
+    grade: 'very_good',
+    note:
+      'أداء قوي في التغطية والمبيعات هذا الشهر. حافظ على زيارة الصيدليات غير المباعة وتحسين التكرار في المناطق الفرعية.',
+    sentAt: '2026-08-18T12:30:00.000Z',
+    sentBy: 'المشرف',
+    deliveredToRep: true,
+  })
+})()
 
 function reviewKey(f: EvaluationFilter): string {
   return `${f.repId}|${f.from}|${f.to}|${f.mainRegionId ?? 'all'}|${f.subRegionId ?? 'all'}`
@@ -296,6 +310,17 @@ export const evaluationMockDatasource: EvaluationDatasource = {
       sentAt: new Date().toISOString(),
       sentBy: 'المشرف',
       deliveredToRep: true,
+    })
+
+    // يُكتب لصندوق المندوب المشترك — يظهر في إشعاراته وشاشة التقييم
+    await pushSupervisorReviewToRep({
+      repId: input.repId,
+      grade: input.grade,
+      note,
+      from: input.from,
+      to: input.to,
+      mainRegionId: input.mainRegionId,
+      subRegionId: input.subRegionId,
     })
   },
 }

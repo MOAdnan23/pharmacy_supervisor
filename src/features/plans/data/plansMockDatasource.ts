@@ -7,10 +7,15 @@ import type {
   WorkPlan,
 } from '../domain/planEntities'
 import {
+  evaluationLabel,
   goalProgress,
   requirePlanName,
   validatePlanDates,
 } from '../domain/planLabels'
+import {
+  pushPlanEvaluationToRep,
+  readPlanRepReplies,
+} from '../../../core/mock/repInboxBridge'
 import type { PlansDatasource } from './plansDatasource'
 
 const REP_OPTIONS = [
@@ -585,25 +590,54 @@ function summaryOf(list: WorkPlan[]): PlansSummary {
   }
 }
 
-function board(): PlansBoard {
-  plans = plans.map(withProgress)
+async function withInboxReplies(plan: WorkPlan): Promise<WorkPlan> {
+  const replies = await readPlanRepReplies(plan.id)
+  if (!replies.length) return plan
+  const existingIds = new Set(plan.notes.map((n) => n.id))
+  const extra = replies
+    .filter((r) => !existingIds.has(r.id))
+    .map((r) => ({
+      id: r.id,
+      authorRole: 'rep' as const,
+      authorName: r.authorName,
+      text: r.text,
+      createdAt: r.createdAt,
+      kind: 'evaluation_reply' as const,
+    }))
+  if (!extra.length) return plan
   return {
-    plans: plans.map((p) => ({
-      ...p,
-      goals: [...p.goals],
-      notes: [...p.notes],
-      repIds: [...p.repIds],
-      repNames: [...p.repNames],
-      repEvaluations: [...p.repEvaluations],
-      executionDetails: p.executionDetails
-        ? {
-            visits: [...p.executionDetails.visits],
-            sales: [...p.executionDetails.sales],
-            collections: [...p.executionDetails.collections],
-            achievedPharmacies: [...p.executionDetails.achievedPharmacies],
-          }
-        : undefined,
-    })),
+    ...plan,
+    notes: [...extra, ...plan.notes],
+  }
+}
+
+async function board(): Promise<PlansBoard> {
+  plans = plans.map(withProgress)
+  const mapped = await Promise.all(
+    plans.map(async (p) => {
+      const merged = await withInboxReplies(p)
+      return {
+        ...merged,
+        goals: [...merged.goals],
+        notes: [...merged.notes],
+        repIds: [...merged.repIds],
+        repNames: [...merged.repNames],
+        repEvaluations: [...merged.repEvaluations],
+        executionDetails: merged.executionDetails
+          ? {
+              visits: [...merged.executionDetails.visits],
+              sales: [...merged.executionDetails.sales],
+              collections: [...merged.executionDetails.collections],
+              achievedPharmacies: [
+                ...merged.executionDetails.achievedPharmacies,
+              ],
+            }
+          : undefined,
+      }
+    }),
+  )
+  return {
+    plans: mapped,
     summary: summaryOf(plans),
     repOptions: [...REP_OPTIONS],
     regionOptions: [...REGION_OPTIONS],
@@ -625,7 +659,7 @@ export const plansMockDatasource: PlansDatasource = {
   async getById(id) {
     const found = plans.map(withProgress).find((p) => p.id === id)
     if (!found) throw new Error('الخطة غير موجودة')
-    return found
+    return withInboxReplies(found)
   },
 
   async upsertPlan(input: UpsertPlanInput) {
@@ -812,17 +846,38 @@ export const plansMockDatasource: PlansDatasource = {
     const idx = plans.findIndex((p) => p.id === input.id)
     if (idx < 0) throw new Error('الخطة غير موجودة')
     const current = plans[idx]
+    const noteText = input.note.trim()
+    const label = evaluationLabel(input.level)
+    const evalNoteEntry = {
+      id: `eval-${Date.now()}`,
+      authorRole: 'supervisor' as const,
+      authorName: 'المشرف',
+      text: noteText
+        ? `تقييم الخطة: ${label} — ${noteText}`
+        : `تقييم الخطة: ${label}`,
+      createdAt: new Date().toISOString(),
+      kind: 'evaluation' as const,
+      evaluationLevel: input.level,
+    }
     plans = [
       ...plans.slice(0, idx),
       {
         ...current,
         evaluationLevel: input.level,
-        evaluationNote: input.note.trim(),
+        evaluationNote: noteText,
         repEvaluations: input.repEvaluations ?? current.repEvaluations,
+        notes: [evalNoteEntry, ...current.notes],
         updatedAt: today(),
       },
       ...plans.slice(idx + 1),
     ]
+
+    await pushPlanEvaluationToRep({
+      supervisorPlanId: current.id,
+      planName: current.name,
+      level: input.level,
+      note: noteText,
+    })
   },
 
   async archivePlan(id) {

@@ -68,6 +68,12 @@ function buildBody(card: RepEvaluationCard): string {
           <td>10</td>
           <td>${b.once.count} صيدلية</td>
         </tr>
+        <tr>
+          <td>صيدليات غير مباعة</td>
+          <td>—</td>
+          <td>—</td>
+          <td>${b.coverage.unsoldPharmacies} من ${b.coverage.totalPharmacies} صيدلية للمندوب</td>
+        </tr>
       </tbody>
     </table>
 
@@ -98,6 +104,14 @@ function buildBody(card: RepEvaluationCard): string {
         <tr><th>الصيدلية</th><th>المنطقة</th><th>عدد الفواتير</th><th>قيمة المبيعات</th></tr>
       </thead>
       <tbody>${pharmacyRowsHtml(b.coverage.pharmacies)}</tbody>
+    </table>
+
+    <h3 style="margin:16px 0 8px">صيدليات غير مباعة (${b.coverage.unsoldPharmacies})</h3>
+    <table class="items">
+      <thead>
+        <tr><th>الصيدلية</th><th>المنطقة</th><th>عدد الفواتير</th><th>قيمة المبيعات</th></tr>
+      </thead>
+      <tbody>${pharmacyRowsHtml(b.coverage.unsoldPharmacyRows)}</tbody>
     </table>
 
     <h3 style="margin:16px 0 8px">صيدليات مكررة ≥ مرتين (${b.repeated.count})</h3>

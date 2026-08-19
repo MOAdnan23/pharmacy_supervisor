@@ -361,7 +361,16 @@ export function PlanDetailPage() {
                 >
                   <header>
                     <strong>{n.authorName}</strong>
-                    <span>{new Date(n.createdAt).toLocaleString('ar-SY')}</span>
+                    <span>
+                      {n.kind === 'evaluation'
+                        ? 'تقييم'
+                        : n.kind === 'evaluation_reply'
+                          ? 'رد على التقييم'
+                          : n.authorRole === 'rep'
+                            ? 'مندوب'
+                            : 'مشرف'}{' '}
+                      · {new Date(n.createdAt).toLocaleString('ar-SY')}
+                    </span>
                   </header>
                   <div>{n.text}</div>
                 </article>
@@ -398,6 +407,38 @@ export function PlanDetailPage() {
               {plan.evaluationNote ? ` — ${plan.evaluationNote}` : ''}
             </p>
           ) : null}
+
+          {(() => {
+            const list = plan.notes.filter(
+              (n) =>
+                n.kind === 'evaluation_reply' ||
+                (n.authorRole === 'rep' && n.id.startsWith('plan-reply')),
+            )
+            if (!list.length) {
+              return (
+                <p className="plans-sub" style={{ marginTop: 8 }}>
+                  لا يوجد رد من المندوب على التقييم بعد.
+                </p>
+              )
+            }
+            return (
+              <div className="plans-note-thread" style={{ marginTop: 12 }}>
+                <h4 style={{ margin: '0 0 8px' }}>رد المندوب على التقييم</h4>
+                {list.map((n) => (
+                  <article key={n.id} className="plans-note rep">
+                    <header>
+                      <strong>{n.authorName}</strong>
+                      <span>
+                        {new Date(n.createdAt).toLocaleString('ar-SY')}
+                      </span>
+                    </header>
+                    <div>{n.text}</div>
+                  </article>
+                ))}
+              </div>
+            )
+          })()}
+
           <form onSubmit={submitEval} className="plans-form-grid">
             <label>
               مستوى التقييم

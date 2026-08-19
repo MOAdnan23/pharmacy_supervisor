@@ -116,6 +116,9 @@ export type PlanNote = {
   authorName: string
   text: string
   createdAt: string
+  /** ملاحظة عادية / تقييم خطة / رد على التقييم */
+  kind?: 'note' | 'evaluation' | 'evaluation_reply'
+  evaluationLevel?: EvaluationLevel
 }
 
 export type RepEvaluation = {

@@ -82,9 +82,13 @@ export type ScoreBreakdown = {
     maxPoints: 35
     points: number
     percent: number
+    /** صيدليات المندوب ضمن النطاق */
     totalPharmacies: number
     soldPharmacies: number
+    /** صيدليات المندوب التي لم تُبع خلال الفترة */
+    unsoldPharmacies: number
     pharmacies: PharmacyEvalRow[]
+    unsoldPharmacyRows: PharmacyEvalRow[]
   }
   repeated: {
     maxPoints: 20

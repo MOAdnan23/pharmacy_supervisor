@@ -159,8 +159,25 @@ export function computeBreakdown(input: {
   const soldList = [...byPharmacy.values()].sort((a, b) =>
     a.pharmacyName.localeCompare(b.pharmacyName, 'ar'),
   )
-  const totalPharmacies = Math.max(pharmaciesInScope.length, soldList.length)
-  const soldPharmacies = soldList.length
+  const soldIds = new Set(soldList.map((p) => p.pharmacyId))
+  const unsoldPharmacyRows: PharmacyEvalRow[] = pharmaciesInScope
+    .filter((p) => !soldIds.has(p.id))
+    .map((p) => ({
+      pharmacyId: p.id,
+      pharmacyName: p.name,
+      regionLabel: p.regionLabel,
+      invoiceCount: 0,
+      salesAmount: 0,
+      invoices: [],
+    }))
+    .sort((a, b) => a.pharmacyName.localeCompare(b.pharmacyName, 'ar'))
+
+  // أساس التغطية = صيدليات المندوب ضمن النطاق
+  const totalPharmacies = pharmaciesInScope.length
+  const soldPharmacies = pharmaciesInScope.filter((p) =>
+    soldIds.has(p.id),
+  ).length
+  const unsoldPharmacies = unsoldPharmacyRows.length
   const coveragePercent =
     totalPharmacies === 0 ? 0 : (soldPharmacies / totalPharmacies) * 100
   const coveragePoints = clamp((coveragePercent / 100) * 35, 0, 35)
@@ -188,7 +205,9 @@ export function computeBreakdown(input: {
       percent: coveragePercent,
       totalPharmacies,
       soldPharmacies,
+      unsoldPharmacies,
       pharmacies: soldList,
+      unsoldPharmacyRows,
     },
     repeated: {
       maxPoints: 20,

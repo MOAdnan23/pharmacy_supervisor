@@ -526,6 +526,8 @@ function DetailPanel({
   onToggleCompany: (companyId: string) => void
 }) {
   if (tab === 'summary') {
+    const { totalPharmacies, soldPharmacies, unsoldPharmacies } =
+      breakdown.coverage
     return (
       <div className="eval-detail">
         <h3>ملخص البنود</h3>
@@ -563,6 +565,36 @@ function DetailPanel({
                 <td>{breakdown.once.points.toFixed(1)}</td>
                 <td>10</td>
                 <td>{breakdown.once.percent.toFixed(1)}%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>صيدليات المندوب</h3>
+        <p className="eval-hint">
+          غير المباعة = صيدليات المندوب ضمن النطاق دون أي فاتورة بيع في الفترة
+        </p>
+        <div className="eval-table-card">
+          <table>
+            <thead>
+              <tr>
+                <th>البند</th>
+                <th>العدد</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>إجمالي صيدليات المندوب</td>
+                <td>{totalPharmacies}</td>
+              </tr>
+              <tr>
+                <td>صيدليات مباعة</td>
+                <td>{soldPharmacies}</td>
+              </tr>
+              <tr>
+                <td>صيدليات غير مباعة</td>
+                <td>
+                  <strong>{unsoldPharmacies}</strong>
+                </td>
               </tr>
             </tbody>
           </table>
